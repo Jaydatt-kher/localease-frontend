@@ -7,21 +7,21 @@ export const notificationApi = baseApi.injectEndpoints({
       query: ({ page = 1, limit = 20, unreadOnly = false } = {}) => {
         const p = new URLSearchParams({ page, limit });
         if (unreadOnly) p.set("unreadOnly", "true");
-        return `/notifications?${p}`;
+        return `/api/notifications?${p}`;
       },
       providesTags: ["Notifications"],
       transformResponse: (res) => res,
     }),
 
     getUnreadCount: builder.query({
-      query: () => "/notifications/unread-count",
+      query: () => "/api/notifications/unread-count",
       providesTags: ["Notifications"],
       transformResponse: (res) => res?.count ?? 0,
     }),
 
     markAsRead: builder.mutation({
       query: (id) => ({
-        url: `/notifications/${id}/read`,
+        url: `/api/notifications/${id}/read`,
         method: "PATCH",
       }),
       invalidatesTags: ["Notifications"],
@@ -29,7 +29,7 @@ export const notificationApi = baseApi.injectEndpoints({
 
     markAllAsRead: builder.mutation({
       query: () => ({
-        url: "/notifications/read-all",
+        url: "/api/notifications/read-all",
         method: "PATCH",
       }),
       invalidatesTags: ["Notifications"],
@@ -37,7 +37,7 @@ export const notificationApi = baseApi.injectEndpoints({
 
     deleteNotification: builder.mutation({
       query: (id) => ({
-        url: `/notifications/${id}`,
+        url: `/api/notifications/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Notifications"],
@@ -45,7 +45,7 @@ export const notificationApi = baseApi.injectEndpoints({
 
     clearAllNotifications: builder.mutation({
       query: () => ({
-        url: "/notifications",
+        url: "/api/notifications",
         method: "DELETE",
       }),
       invalidatesTags: ["Notifications"],

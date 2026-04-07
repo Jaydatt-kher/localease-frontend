@@ -5,13 +5,13 @@ export const userApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
 
         getMyProfile: builder.query({
-            query: () => "/customer/profile",
+            query: () => "/api/customer/profile",
             providesTags: ["User"],
             transformResponse: (res) => res?.data ?? res,
         }),
 
         updateMyProfile: builder.mutation({
-            query: (body) => ({ url: "/customer/update-profile", method: "PATCH", body }),
+            query: (body) => ({ url: "/api/customer/update-profile", method: "PATCH", body }),
             invalidatesTags: ["User"],
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 try {
@@ -27,7 +27,7 @@ export const userApi = baseApi.injectEndpoints({
         }),
 
         deleteMyAccount: builder.mutation({
-            query: () => ({ url: "/customer/delete-account", method: "DELETE" }),
+            query: () => ({ url: "/api/customer/delete-account", method: "DELETE" }),
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 try {
                     await queryFulfilled;
@@ -37,12 +37,12 @@ export const userApi = baseApi.injectEndpoints({
         }),
 
         sendOtpMobile: builder.mutation({
-            query: () => ({ url: "/auth/send-otp-mobile", method: "POST" }),
+            query: () => ({ url: "/api/auth/send-otp-mobile", method: "POST" }),
             invalidatesTags: ["User"],
         }),
 
         verifyOtpMobile: builder.mutation({
-            query: (body) => ({ url: "/auth/verify-otp-mobile", method: "POST", body }),
+            query: (body) => ({ url: "/api/auth/verify-otp-mobile", method: "POST", body }),
             invalidatesTags: ["User"],
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 try {

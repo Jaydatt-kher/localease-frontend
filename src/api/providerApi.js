@@ -7,20 +7,20 @@ export const providerApi = baseApi.injectEndpoints({
       query: ({ lat, lng, radius = 10, serviceId } = {}) => {
         const p = new URLSearchParams({ lat, lng, radius });
         if (serviceId) p.set("serviceId", serviceId);
-        return `/customer/providers/nearby?${p}`;
+        return `/api/customer/providers/nearby?${p}`;
       },
       providesTags: ["Provider"],
       transformResponse: (res) => res?.data ?? res,
     }),
 
     getProvidersByService: builder.query({
-      query: (serviceId) => `/customer/providers/${serviceId}`,
+      query: (serviceId) => `/api/customer/providers/${serviceId}`,
       providesTags: ["Provider"],
       transformResponse: (res) => res?.data ?? res,
     }),
 
     getProviderDetails: builder.query({
-      query: (id) => `/customer/provider-details/${id}`,
+      query: (id) => `/api/customer/provider-details/${id}`,
       providesTags: (r, e, id) => [{ type: "Provider", id }],
       transformResponse: (res) => res?.data ?? res,
     }),
@@ -33,57 +33,57 @@ export const providerApi = baseApi.injectEndpoints({
           })
         );
         const p = new URLSearchParams(cleanFilters);
-        return `/customer/filter-providers/${serviceId}?${p}`;
+        return `/api/customer/filter-providers/${serviceId}?${p}`;
       },
       providesTags: ["Provider"],
       transformResponse: (res) => res,
     }),
 
     getMyProviderProfile: builder.query({
-      query: () => "/provider/get-profile",
+      query: () => "/api/provider/get-profile",
       providesTags: ["ProviderProfile"],
       transformResponse: (res) => res?.providerResponse ?? res,
     }),
 
     createProviderProfile: builder.mutation({
-      query: (body) => ({ url: "/provider/profile", method: "POST", body }),
+      query: (body) => ({ url: "/api/provider/profile", method: "POST", body }),
       invalidatesTags: ["ProviderProfile"],
     }),
 
     updateProviderProfile: builder.mutation({
-      query: (body) => ({ url: "/provider/update-profile", method: "PUT", body }),
+      query: (body) => ({ url: "/api/provider/update-profile", method: "PUT", body }),
       invalidatesTags: ["ProviderProfile"],
     }),
 
     providerSendOtpMobile: builder.mutation({
-      query: () => ({ url: "/provider/send-otp-mobile", method: "POST" }),
+      query: () => ({ url: "/api/provider/send-otp-mobile", method: "POST" }),
     }),
 
     providerVerifyOtpMobile: builder.mutation({
-      query: (body) => ({ url: "/provider/verify-otp-mobile", method: "POST", body }),
+      query: (body) => ({ url: "/api/provider/verify-otp-mobile", method: "POST", body }),
       invalidatesTags: ["ProviderProfile"],
     }),
 
     getMyProviderServices: builder.query({
-      query: () => "/provider/get-all-service",
+      query: () => "/api/provider/get-all-service",
       providesTags: ["ProviderServices"],
       transformResponse: (res) => res?.services ?? res,
     }),
 
     getProviderServiceById: builder.query({
-      query: (id) => `/provider/get-service/${id}`,
+      query: (id) => `/api/provider/get-service/${id}`,
       providesTags: (r, e, id) => [{ type: "ProviderServices", id }],
       transformResponse: (res) => res?.services ?? res,
     }),
 
     createProviderService: builder.mutation({
-      query: (body) => ({ url: "/provider/create-service", method: "POST", body }),
+      query: (body) => ({ url: "/api/provider/create-service", method: "POST", body }),
       invalidatesTags: ["ProviderServices"],
     }),
 
     updateProviderService: builder.mutation({
       query: ({ id, ...body }) => ({
-        url: `/provider/update-service/${id}`,
+        url: `/api/provider/update-service/${id}`,
         method: "PUT",
         body,
       }),
@@ -92,14 +92,14 @@ export const providerApi = baseApi.injectEndpoints({
 
     deleteProviderService: builder.mutation({
       query: (id) => ({
-        url: `/provider/delete-service/${id}`,
+        url: `/api/provider/delete-service/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["ProviderServices"],
     }),
 
     getNewRequests: builder.query({
-      query: () => "/provider/new-request",
+      query: () => "/api/provider/new-request",
       providesTags: ["ProviderRequests"],
       transformResponse: (res) => res?.data ?? [],
     }),
@@ -108,7 +108,7 @@ export const providerApi = baseApi.injectEndpoints({
       query: ({ status, page = 1, limit = 10 } = {}) => {
         const p = new URLSearchParams({ page, limit });
         if (status) p.set("status", status);
-        return `/provider/get-my-bid?${p}`;
+        return `/api/provider/get-my-bid?${p}`;
       },
       providesTags: ["ProviderRequests"],
       transformResponse: (res) => res,
@@ -116,7 +116,7 @@ export const providerApi = baseApi.injectEndpoints({
 
     respondToRequest: builder.mutation({
       query: ({ responseId, ...body }) => ({
-        url: `/provider/requests/${responseId}/respond`,
+        url: `/api/provider/requests/${responseId}/respond`,
         method: "PUT",
         body,
       }),
@@ -125,7 +125,7 @@ export const providerApi = baseApi.injectEndpoints({
 
     updateMyBid: builder.mutation({
       query: ({ responseId, ...body }) => ({
-        url: `/provider/requests/${responseId}/update`,
+        url: `/api/provider/requests/${responseId}/update`,
         method: "PUT",
         body,
       }),
@@ -134,7 +134,7 @@ export const providerApi = baseApi.injectEndpoints({
 
     ignoreRequest: builder.mutation({
       query: (responseId) => ({
-        url: `/provider/requests/${responseId}/ignore`,
+        url: `/api/provider/requests/${responseId}/ignore`,
         method: "PUT",
       }),
       invalidatesTags: ["ProviderRequests", "Notifications"],
@@ -143,21 +143,21 @@ export const providerApi = baseApi.injectEndpoints({
     getProviderBookings: builder.query({
       query: (status) => {
         const p = status ? `?status=${status}` : "";
-        return `/provider/bookings${p}`;
+        return `/api/provider/bookings${p}`;
       },
       providesTags: ["Bookings"],
       transformResponse: (res) => res?.data ?? [],
     }),
 
     getProviderBookingDetail: builder.query({
-      query: (id) => `/provider/bookings/${id}`,
+      query: (id) => `/api/provider/bookings/${id}`,
       providesTags: (r, e, id) => [{ type: "Bookings", id }],
       transformResponse: (res) => res?.data ?? res,
     }),
 
     setFinalAmount: builder.mutation({
       query: ({ id, ...body }) => ({
-        url: `/provider/bookings/${id}/set-final-amount`,
+        url: `/api/provider/bookings/${id}/set-final-amount`,
         method: "PATCH",
         body,
       }),
