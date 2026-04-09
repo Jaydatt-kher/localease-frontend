@@ -46,7 +46,7 @@ export default function ReviewFormPage() {
       toast.error("Payment ID not found.");
       return;
     }
-    const downloadUrl = `http://localhost:8000/api/payments/${booking.payment._id}/receipt`;
+    const downloadUrl = `${import.meta.env.VITE_API_URL}/api/payments/${booking.payment._id}/receipt`;
     fetch(downloadUrl, {
       credentials: "include",
     })
