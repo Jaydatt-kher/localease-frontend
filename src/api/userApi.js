@@ -8,6 +8,18 @@ export const userApi = baseApi.injectEndpoints({
             query: () => "/api/customer/profile",
             providesTags: ["User"],
             transformResponse: (res) => res?.data ?? res,
+            async onQueryStarted(_, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    if (data) {
+                        dispatch(updateUser({
+                            fullName: data.fullName,
+                            mobileNo: data.mobileNo,
+                            photoUrl: data.photoUrl,
+                        }));
+                    }
+                } catch { }
+            },
         }),
 
         updateMyProfile: builder.mutation({
@@ -16,11 +28,13 @@ export const userApi = baseApi.injectEndpoints({
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 try {
                     const { data } = await queryFulfilled;
-                    if (data?.user) dispatch(updateUser({
-                        fullName: data.user.fullName,
-                        mobileNo: data.user.mobileNo,
-                        address: data.user.address,
-                        photoUrl: data.user.photoUrl,
+                    // Backend returns { success, message, data: updatedUser }
+                    const updatedUser = data?.data ?? data?.user;
+                    if (updatedUser) dispatch(updateUser({
+                        fullName: updatedUser.fullName,
+                        mobileNo: updatedUser.mobileNo,
+                        address: updatedUser.address,
+                        photoUrl: updatedUser.photoUrl,
                     }));
                 } catch { }
             },

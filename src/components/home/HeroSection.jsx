@@ -79,13 +79,13 @@ export default function HeroSection() {
         : null;
 
     return (
-        <section className="relative overflow-hidden bg-surface-light dark:bg-surface-dark py-16 pb-20">
-            {}
-            <div className="absolute inset-0 dot-pattern opacity-50" />
-            {}
-            <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-primary/8 pointer-events-none" />
-            {}
-            <div className="absolute -bottom-16 -left-16 w-80 h-80 rounded-full bg-accent/8 pointer-events-none" />
+        <section className="relative bg-surface-light dark:bg-surface-dark py-16 pb-20">
+            {/* Decorative background — clipped to section only */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 dot-pattern opacity-50" />
+                <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-primary/8" />
+                <div className="absolute -bottom-16 -left-16 w-80 h-80 rounded-full bg-accent/8" />
+            </div>
 
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -140,7 +140,7 @@ export default function HeroSection() {
 
                     {}
                     {open && inputVal.length >= 2 && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-surface-light dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl shadow-xl z-50 overflow-hidden">
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-surface-light dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl shadow-xl z-50 max-h-[420px] overflow-y-auto">
                             {isFetching && (
                                 <div className="flex items-center gap-2 px-4 py-3 text-xs text-muted dark:text-muted-dark font-body">
                                     <div className="w-3 h-3 rounded-full bg-primary/40 animate-pulse" />

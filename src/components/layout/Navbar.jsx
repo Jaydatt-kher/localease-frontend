@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { selectUser, selectIsProvider, selectIsAdmin, logout } from "../../redux/authSlice";
@@ -15,6 +15,7 @@ import {
   useGetProviderStatsQuery,
   useGetPendingProvidersQuery,
 } from "../../api/adminApi";
+import { useLazySearchUnifiedQuery } from "../../api/serviceApi";
 
 import {
   FiSearch, FiMenu, FiX, FiChevronDown, FiLogOut,
@@ -412,12 +413,22 @@ export default function Navbar({ hideSearch = false, title = "" }) {
   const [mobileOpen,   setMobileOpen]   = useState(false);
   const [searchQuery,  setSearchQuery]  = useState("");
   const [scrolled,     setScrolled]     = useState(false);
-  const dropdownRef = useRef(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const dropdownRef  = useRef(null);
+  const searchRef    = useRef(null);
+  const debounceRef  = useRef(null);
+
+  const [triggerSearch, { data: suggestionData, isFetching: suggestionsLoading }] = useLazySearchUnifiedQuery();
+  const suggestionCategories = suggestionData?.categories ?? [];
+  const suggestionServices   = suggestionData?.services   ?? [];
+  const hasSuggestions = suggestionCategories.length > 0 || suggestionServices.length > 0;
 
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target))
         setDropdownOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target))
+        setShowSuggestions(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -429,12 +440,32 @@ export default function Navbar({ hideSearch = false, title = "" }) {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  useEffect(() => { setMobileOpen(false); setShowSuggestions(false); }, [location.pathname]);
+
+  const handleSearchChange = useCallback((val) => {
+    setSearchQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.trim().length >= 3) {
+      debounceRef.current = setTimeout(() => {
+        triggerSearch(val.trim());
+        setShowSuggestions(true);
+      }, 300);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [triggerSearch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setShowSuggestions(false);
     if (searchQuery.trim())
       navigate(`/services?q=${encodeURIComponent(searchQuery.trim())}`);
+  };
+
+  const handleSuggestionClick = (path) => {
+    setShowSuggestions(false);
+    setSearchQuery("");
+    navigate(path);
   };
 
   const handleSignOut = async () => {
@@ -484,25 +515,102 @@ export default function Navbar({ hideSearch = false, title = "" }) {
               </span>
             ) : null
           ) : (
-            <form
-              onSubmit={handleSearch}
-              className="hidden md:flex flex-1 max-w-[460px] items-center gap-0 bg-background-light dark:bg-surface-alt rounded-full border border-border dark:border-border-dark px-4 py-1.5 hover:border-primary transition-colors"
-            >
-              <FiSearch size={16} className="text-muted dark:text-muted-dark flex-shrink-0" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search — plumber, AC repair..."
-                className="flex-1 bg-transparent border-none outline-none text-sm text-foreground dark:text-foreground-dark placeholder:text-muted dark:placeholder:text-muted-dark px-3 py-0.5 font-body"
-              />
-              <button
-                type="submit"
-                className="flex-shrink-0 px-3 py-1 bg-primary text-white text-xs font-bold rounded-full hover:bg-primary-hover transition-colors"
+            <div ref={searchRef} className="hidden md:block relative flex-1 max-w-[460px]">
+              <form
+                onSubmit={handleSearch}
+                className="flex items-center gap-0 bg-background-light dark:bg-surface-alt rounded-full border border-border dark:border-border-dark px-4 py-1.5 hover:border-primary transition-colors"
               >
-                Search
-              </button>
-            </form>
+                <FiSearch size={16} className="text-muted dark:text-muted-dark flex-shrink-0" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onFocus={() => { if (searchQuery.trim().length >= 3 && hasSuggestions) setShowSuggestions(true); }}
+                  placeholder="Search — plumber, AC repair..."
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-foreground dark:text-foreground-dark placeholder:text-muted dark:placeholder:text-muted-dark px-3 py-0.5 font-body"
+                  autoComplete="off"
+                />
+                <button
+                  type="submit"
+                  className="flex-shrink-0 px-3 py-1 bg-primary text-white text-xs font-bold rounded-full hover:bg-primary-hover transition-colors"
+                >
+                  Search
+                </button>
+              </form>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && searchQuery.trim().length >= 3 && (
+                <div className="absolute top-[calc(100%+6px)] left-0 right-0 bg-surface-light dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl shadow-xl z-50 max-h-[420px] overflow-y-auto animate-slide-down">
+                  {suggestionsLoading ? (
+                    <div className="flex items-center gap-2 px-4 py-3 text-xs text-muted dark:text-muted-dark font-body">
+                      <div className="w-3 h-3 rounded-full bg-primary/40 animate-pulse" />
+                      Searching…
+                    </div>
+                  ) : !hasSuggestions ? (
+                    <div className="px-4 py-4 text-xs text-muted dark:text-muted-dark font-body text-center">
+                      No results for &quot;{searchQuery}&quot; — press Enter to search anyway
+                    </div>
+                  ) : (
+                    <div>
+                      {suggestionCategories.length > 0 && (
+                        <div>
+                          <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-muted dark:text-muted-dark uppercase tracking-widest font-body">
+                            Categories
+                          </p>
+                          {suggestionCategories.map((cat) => (
+                            <button
+                              key={cat._id}
+                              onMouseDown={() => handleSuggestionClick(`/services?categoryId=${cat._id}&categoryName=${encodeURIComponent(cat.name)}`)}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary-light dark:hover:bg-primary/15 transition-colors text-left"
+                            >
+                              <div className="w-7 h-7 rounded-lg bg-primary-light dark:bg-primary/15 flex items-center justify-center text-primary flex-shrink-0">
+                                <FiGrid size={14} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-body font-semibold text-foreground dark:text-foreground-dark">{cat.name}</p>
+                                <p className="text-[10px] font-body text-muted dark:text-muted-dark">Browse all services</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {suggestionServices.length > 0 && (
+                        <div className={suggestionCategories.length > 0 ? "border-t border-border dark:border-border-dark" : ""}>
+                          <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-muted dark:text-muted-dark uppercase tracking-widest font-body">
+                            Services
+                          </p>
+                          {suggestionServices.map((svc) => (
+                            <button
+                              key={svc._id}
+                              onMouseDown={() => handleSuggestionClick(`/services/${svc._id}`)}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary-light dark:hover:bg-primary/15 transition-colors text-left"
+                            >
+                              <div className="w-7 h-7 rounded-lg bg-background-light dark:bg-surface-alt flex items-center justify-center text-muted dark:text-muted-dark flex-shrink-0">
+                                <MdWorkOutline size={14} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-body font-semibold text-foreground dark:text-foreground-dark truncate">{svc.name}</p>
+                                {svc.category?.name && (
+                                  <p className="text-[10px] font-body text-muted dark:text-muted-dark">{svc.category.name}</p>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        onMouseDown={() => handleSuggestionClick(`/services?q=${encodeURIComponent(searchQuery.trim())}`)}
+                        className="w-full flex items-center gap-2 px-4 py-3 border-t border-border dark:border-border-dark text-xs font-body font-semibold text-primary hover:bg-primary-light dark:hover:bg-primary/15 transition-colors"
+                      >
+                        <FiSearch size={12} /> Search all results for &quot;{searchQuery}&quot;
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           {}

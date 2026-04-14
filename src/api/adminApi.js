@@ -1,4 +1,5 @@
 import { baseApi } from "./baseApi";
+import { updateUser } from "../redux/authSlice";
 
 export const adminApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -264,6 +265,18 @@ export const adminApi = baseApi.injectEndpoints({
     getAdminProfile: builder.query({
       query: () => "/api/admin/profile",
       providesTags: ["AdminProfile"],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.user) {
+            dispatch(updateUser({
+              fullName: data.user.fullName,
+              mobileNo: data.user.mobileNo,
+              photoUrl: data.user.photoUrl,
+            }));
+          }
+        } catch { }
+      },
     }),
     updateAdminProfile: builder.mutation({
       query: (data) => ({ url: "/api/admin/profile", method: "PUT", body: data }),
